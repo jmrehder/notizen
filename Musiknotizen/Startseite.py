@@ -3,8 +3,6 @@ Schicker Welcome‑Screen mit Kennzahlen, Quick‑Links & sanftem Dark‑Theme�
 """
 
 
-st.write("DEBUG:", st.secrets.get("postgres"))
-st.write(st.secrets["postgres"]["host"], st.secrets["postgres"]["port"])
 
 
 # ---------------------------------------------------------------------------
