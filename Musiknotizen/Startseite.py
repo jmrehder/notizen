@@ -7,6 +7,8 @@ from utils import check_password, get_db_connection
 
 
 st.write("DEBUG:", st.secrets.get("postgres"))
+st.write(st.secrets["postgres"]["host"], st.secrets["postgres"]["port"])
+
 
 # ---------------------------------------------------------------------------
 # Seiteneinstellungen
