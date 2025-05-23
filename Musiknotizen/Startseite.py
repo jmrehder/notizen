@@ -5,6 +5,9 @@ Schicker Welcome‑Screen mit Kennzahlen, Quick‑Links & sanftem Dark‑Theme�
 import streamlit as st
 from utils import check_password, get_db_connection
 
+
+st.write("DEBUG:", st.secrets.get("postgres"))
+
 # ---------------------------------------------------------------------------
 # Seiteneinstellungen
 # ---------------------------------------------------------------------------
