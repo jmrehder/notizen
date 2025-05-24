@@ -19,6 +19,7 @@ st.markdown("""
     .quicklink{display:flex;align-items:center;gap:.45rem;padding:.8rem 1rem;border-radius:.8rem;background:#33436d;color:#fff!important;font-weight:600;text-decoration:none;transition:background .2s}
     .quicklink:hover{background:#415b9c}
     .note-hint{background: #f7f6ee; border-radius: .7rem; padding: 1.2em 1em; color: #444; margin: 2em 0 1.2em 0; font-size: 1.06rem;}
+    .footer-jmr {text-align: center; color: #aaa; font-size: 1.07em; margin-top: 2em; letter-spacing: 0.03em;}
     </style>
 """, unsafe_allow_html=True)
 
@@ -37,32 +38,25 @@ count_tags = len(all_tags)
 cur.close()
 
 # ---------------------------------------------------------------------------
-# Hero-Banner
+# Hero-Banner (zentriert, ohne Bild, mit JmrStudios)
 # ---------------------------------------------------------------------------
-col_l, col_r = st.columns([5,3], gap="large")
-with col_l:
-    st.markdown('<div class="big-hello">👋 Willkommen, Mama!</div>', unsafe_allow_html=True)
-    st.markdown(
-        '<div class="subtitle">'
-        'Hier ist dein persönliches Tagebuch für alles rund um Musik und Kunst – egal ob Klassik, Jazz, Rock, moderne Musik, Lesungen, '
-        'Künstler:innen, Ausstellungen oder deine liebsten Radiosendungen!<br>'
-        'Halte besondere Erlebnisse, Werke, Namen, Ideen und auch spontane Inspirationen jederzeit fest. '
-        '<b>Deine Notizen sind für die ganze Welt der Kunst gemacht!</b>'
-        '</div>',
-        unsafe_allow_html=True
-    )
-    st.markdown("""
-        <div class="note-hint">
-            <b>Neu:</b> Notiere jetzt alles zu <span style="color:#4761ab"><b>Radiosendungen</b></span> – mit Moderator, Sendedatum oder besonderen Eindrücken!
-            <br>
-            Aber auch alles andere aus der Welt der Kunst: Konzertmomente, Gemälde, Gedichte, Lesungen oder Ausstellungen – deiner Kreativität sind keine Grenzen gesetzt! 🎙️🎨🎶
-        </div>
-    """, unsafe_allow_html=True)
-with col_r:
-   
-        caption="Musik & Kunst verbinden – JmrStudios",
-        use_container_width=True,
-    )
+st.markdown('<div class="big-hello">👋 Willkommen, Mama!</div>', unsafe_allow_html=True)
+st.markdown(
+    '<div class="subtitle">'
+    'Hier ist dein persönliches Tagebuch für alles rund um Musik und Kunst – egal ob Klassik, Jazz, Rock, moderne Musik, Lesungen, '
+    'Künstler:innen, Ausstellungen oder deine liebsten Radiosendungen!<br>'
+    'Halte besondere Erlebnisse, Werke, Namen, Ideen und auch spontane Inspirationen jederzeit fest. '
+    '<b>Deine Notizen sind für die ganze Welt der Kunst gemacht!</b>'
+    '</div>',
+    unsafe_allow_html=True
+)
+st.markdown("""
+    <div class="note-hint">
+        <b>Neu:</b> Notiere jetzt alles zu <span style="color:#4761ab"><b>Radiosendungen</b></span> – mit Moderator, Sendedatum oder besonderen Eindrücken!
+        <br>
+        Aber auch alles andere aus der Welt der Kunst: Konzertmomente, Gemälde, Gedichte, Lesungen oder Ausstellungen – deiner Kreativität sind keine Grenzen gesetzt! 🎙️🎨🎶
+    </div>
+""", unsafe_allow_html=True)
 
 st.markdown("---")
 
@@ -92,9 +86,10 @@ with ql2:
 st.markdown("---")
 
 # ---------------------------------------------------------------------------
-# Footer-Tipp
+# Footer-Tipp & JmrStudios
 # ---------------------------------------------------------------------------
 st.info(
     "💡 Tipp: In der Ansicht *Alle Notizen* kannst du per Klick auf ein Tag sofort filtern. "
     "Und in jeder Notiz kannst du jetzt nicht nur Musik, sondern auch Kunstwerke, Künstler:innen, Radiosendungen, Moderatoren und all deine persönlichen Eindrücke festhalten! 🎶🎨"
 )
+st.markdown('<div class="footer-jmr">Musik & Kunst verbinden – <b>JmrStudios</b></div>', unsafe_allow_html=True)
