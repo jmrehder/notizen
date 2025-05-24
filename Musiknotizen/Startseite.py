@@ -59,9 +59,8 @@ with col_l:
         </div>
     """, unsafe_allow_html=True)
 with col_r:
-    st.image(
-        "https://images.unsplash.com/photo-1508973478649-170737c2ec72?auto=format&fit=crop&w=700&q=80",
-        caption="Musik & Kunst verbinden – © Unsplash",
+   
+        caption="Musik & Kunst verbinden – JmrStudios",
         use_container_width=True,
     )
 
