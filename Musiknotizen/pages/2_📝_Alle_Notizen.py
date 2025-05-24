@@ -8,7 +8,7 @@ st.title("📝 Alle Notizen (Musik)")
 
 # ----------- Suchfeld und Filter ----------
 with st.expander("🔎 Erweiterte Suche & Filter", expanded=True):
-    col1, col2, col3 = st.columns([3,2,2])
+    col1, col2, col3 = st.columns([3,2,3])
     with col1:
         search_query = st.text_input(
             "Suche in Titel, Werk, Komponist, Interpret, Notiz, Tags, Radiosendung, Moderator",
@@ -18,7 +18,12 @@ with st.expander("🔎 Erweiterte Suche & Filter", expanded=True):
     with col2:
         tag_filter = st.text_input("Nach Tag filtern (optional)", value=st.session_state.get("tag_filter", ""), key="tag_filter")
     with col3:
-        interpret_filter = st.text_input("Nach Interpret filtern (optional)", value=st.session_state.get("interpret_filter", ""), key="interpret_filter")
+        date_mode = st.radio("Filtern nach Datum", ["Kein Filter", "Bestimmtes Datum", "Zeitraum"], horizontal=True)
+        if date_mode == "Bestimmtes Datum":
+            date_exact = st.date_input("Datum auswählen", key="date_exact")
+        elif date_mode == "Zeitraum":
+            date_from = st.date_input("Von", key="date_from")
+            date_to   = st.date_input("Bis", key="date_to")
 
 # ----------- Daten holen & filtern ----------
 notes = get_notes()
@@ -26,7 +31,6 @@ if not notes:
     st.info("Keine Notizen gefunden.")
     st.stop()
 
-# Filter
 def matches(note):
     (
         _id, titel, werk, komponist, epoche, verzeichnis, interpret,
@@ -34,18 +38,22 @@ def matches(note):
     ) = note
     query = search_query.lower()
     tagf = tag_filter.lower()
-    intf = interpret_filter.lower()
     # Suchen in allen relevanten Feldern
     haystack = " ".join(str(x or "").lower() for x in [
         titel, werk, komponist, epoche, verzeichnis, interpret, notiz, von, tags, radiosendung, moderator
     ])
-    # Filterlogik
+    # Suche
     if query and query not in haystack:
         return False
     if tagf and (tagf not in (tags or "").lower()):
         return False
-    if intf and (intf not in (interpret or "").lower()):
-        return False
+    # Datumsfilter
+    if date_mode == "Bestimmtes Datum":
+        if not datum or datum != date_exact:
+            return False
+    elif date_mode == "Zeitraum":
+        if not datum or not (date_from <= datum <= date_to):
+            return False
     return True
 
 notes = list(filter(matches, notes))
