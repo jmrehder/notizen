@@ -6,11 +6,51 @@ import datetime
 st.set_page_config(page_title="Alle Notizen (Musik)", layout="wide")
 st.title("📝 Alle Notizen (Musik)")
 
+# ----------- Suchfeld und Filter ----------
+with st.expander("🔎 Erweiterte Suche & Filter", expanded=True):
+    col1, col2, col3 = st.columns([3,2,2])
+    with col1:
+        search_query = st.text_input(
+            "Suche in Titel, Werk, Komponist, Interpret, Notiz, Tags, Radiosendung, Moderator",
+            value=st.session_state.get("search_query", ""),
+            key="search_query",
+        )
+    with col2:
+        tag_filter = st.text_input("Nach Tag filtern (optional)", value=st.session_state.get("tag_filter", ""), key="tag_filter")
+    with col3:
+        interpret_filter = st.text_input("Nach Interpret filtern (optional)", value=st.session_state.get("interpret_filter", ""), key="interpret_filter")
+
+# ----------- Daten holen & filtern ----------
 notes = get_notes()
 if not notes:
     st.info("Keine Notizen gefunden.")
     st.stop()
 
+# Filter
+def matches(note):
+    (
+        _id, titel, werk, komponist, epoche, verzeichnis, interpret,
+        notiz, von, tags, radiosendung, moderator, datum, audio_bytes
+    ) = note
+    query = search_query.lower()
+    tagf = tag_filter.lower()
+    intf = interpret_filter.lower()
+    # Suchen in allen relevanten Feldern
+    haystack = " ".join(str(x or "").lower() for x in [
+        titel, werk, komponist, epoche, verzeichnis, interpret, notiz, von, tags, radiosendung, moderator
+    ])
+    # Filterlogik
+    if query and query not in haystack:
+        return False
+    if tagf and (tagf not in (tags or "").lower()):
+        return False
+    if intf and (intf not in (interpret or "").lower()):
+        return False
+    return True
+
+notes = list(filter(matches, notes))
+
+# ----------- Pagination ----------
 NOTES_PER_PAGE = 5
 page_key = "current_page_all"
 st.session_state.setdefault(page_key, 1)
@@ -35,6 +75,7 @@ def _paginator(pos: str):
 
 _paginator("top")
 
+# ----------- Anzeige und Bearbeiten ----------
 start = (st.session_state[page_key] - 1) * NOTES_PER_PAGE
 for note in notes[start : start + NOTES_PER_PAGE]:
     (
@@ -64,8 +105,10 @@ for note in notes[start : start + NOTES_PER_PAGE]:
                 
                 # Audio-Bereich
                 st.markdown("**Vorhandene Audio-Notiz:**")
+                remove_audio = False
                 if audio_bytes:
                     st.audio(audio_bytes, format="audio/wav")
+                    remove_audio = st.checkbox("Sprachnotiz löschen", key=f"remove_audio_{note_id}")
                 else:
                     st.info("Kein Audio gespeichert.")
                 st.markdown("**Neues Audio aufnehmen oder hochladen (optional, ersetzt vorhandene Aufnahme):**")
@@ -83,8 +126,14 @@ for note in notes[start : start + NOTES_PER_PAGE]:
                 with col_s:
                     if st.form_submit_button("Speichern"):
                         if t_in and n_in:
-                            # Audio: Vorrang hat neues, sonst bisheriges
-                            final_audio = updated_audio if updated_audio is not None else audio_bytes
+                            # Audio löschen geht vor Upload/Beibehalten!
+                            if remove_audio:
+                                final_audio = None
+                            elif updated_audio is not None:
+                                final_audio = updated_audio
+                            else:
+                                final_audio = audio_bytes
+
                             update_note(
                                 note_id, t_in, w_in, k_in, e_in, v_in, i_in,
                                 n_in, von_in, tag_in, r_in, m_in, d_in, final_audio
