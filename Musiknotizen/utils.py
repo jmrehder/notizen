@@ -58,11 +58,6 @@ def add_note(titel, kategorie, notiz, autor, tags, radiosendung, moderator, datu
         """INSERT INTO notizen (titel, kategorie, notiz, autor, tags, radiosendung, moderator, datum, bild_url, audio_url)
            VALUES (%s,%s,%s,%s,%s,%s,%s,%s,%s,%s)""",
         (titel, kategorie, notiz, autor, tags, radiosendung, moderator, datum, bild_url, audio_url),
-    ):
-    _exec(
-        """INSERT INTO notizen (titel, kategorie, notiz, autor, tags, radiosendung, moderator, zusatzinfo, datum, bild_url, audio_url)
-           VALUES (%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s)""",
-        (titel, kategorie, notiz, autor, tags, radiosendung, moderator, zusatzinfo, datum, bild_url, audio_url),
     )
 
 def update_note(
@@ -74,7 +69,6 @@ def update_note(
     tags: str | None,
     radiosendung: str | None,
     moderator: str | None,
-    zusatzinfo: dict | None,
     datum: str | None,
     bild_url: str | None,
     audio_url: str | None,
@@ -88,19 +82,18 @@ def update_note(
                tags=%s,
                radiosendung=%s,
                moderator=%s,
-               zusatzinfo=%s,
                datum=%s,
                bild_url=%s,
                audio_url=%s
            WHERE id=%s""",
-        (titel, kategorie, notiz, autor, tags, radiosendung, moderator, zusatzinfo, datum, bild_url, audio_url, note_id),
+        (titel, kategorie, notiz, autor, tags, radiosendung, moderator, datum, bild_url, audio_url, note_id),
     )
 
 def get_notes(search_query: str = "", selected_tag: str | None = None, sort_by: str = "datum_desc"):
     conn = get_db_connection()
     cur = conn.cursor()
     base = sql.SQL(
-        "SELECT id, titel, kategorie, notiz, autor, tags, radiosendung, moderator, zusatzinfo, datum, bild_url, audio_url FROM notizen"
+        "SELECT id, titel, kategorie, notiz, autor, tags, radiosendung, moderator, datum, bild_url, audio_url FROM notizen"
     )
     where, params = [], []
     if search_query:
