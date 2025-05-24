@@ -3,7 +3,7 @@ Hero‑Banner, Kennzahlen, Quick-Links – plus Pooler‑Verbindung (Secrets) fu
 """
 
 import streamlit as st
-from utils import check_password, get_db_connection
+from utils import get_db_connection
 
 # ---------------------------------------------------------------------------
 # Seiteneinstellungen (muss das erste Streamlit-Kommando sein!)
