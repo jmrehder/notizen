@@ -23,38 +23,9 @@ else:                                  # Fallback: lokale Dev‑Datenbank
         "sslmode": "disable",      # lokal kein SSL
     }
 
-USERS = {"Mama": "Klavier", "JM": "Klavier"}
 
-# ---------------------------------------------------------------------------
-# 2) Authentifizierung
-# ---------------------------------------------------------------------------
 
-def check_password() -> bool:
-    if "authenticated" not in st.session_state:
-        st.session_state["authenticated"] = False
 
-    if not st.session_state["authenticated"]:
-        st.sidebar.subheader("Anmeldung")
-        st.sidebar.text_input("Benutzername", key="user_in", on_change=_pwd_entered)
-        st.sidebar.text_input("Passwort", type="password", key="pwd_in", on_change=_pwd_entered)
-        if st.session_state.get("login_failed"):
-            st.sidebar.error("Anmeldung fehlgeschlagen.")
-        return False
-
-    st.sidebar.markdown("---")
-    st.sidebar.subheader("Angemeldet als:")
-    st.sidebar.write(st.session_state.get("username", "Nutzer"))
-    if st.sidebar.button("Abmelden"):
-        st.session_state.clear(); st.rerun()
-    return True
-
-def _pwd_entered() -> None:
-    u, pw = st.session_state.get("user_in", ""), st.session_state.get("pwd_in", "")
-    if USERS.get(u) == pw:
-        st.session_state.update({"authenticated": True, "username": u})
-        st.session_state.pop("login_failed", None)
-    else:
-        st.session_state.update({"authenticated": False, "login_failed": True})
 
 # ---------------------------------------------------------------------------
 # 3) YouTube‑Helper
