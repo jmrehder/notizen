@@ -28,12 +28,13 @@ st.markdown("""
 # ---------------------------------------------------------------------------
 conn = get_db_connection()
 cur  = conn.cursor()
-cur.execute("SELECT COUNT(*), COUNT(DISTINCT autor), COUNT(DISTINCT kategorie) FROM notizen")
+
+cur.execute("SELECT COUNT(*), COUNT(DISTINCT von), COUNT(DISTINCT komponist), COUNT(DISTINCT werk) FROM notizen")
 row = cur.fetchone()
 if row is None or row[0] is None:
-    count_notes = count_authors = count_categories = 0
+    count_notes = count_von = count_komponisten = count_werke = 0
 else:
-    count_notes, count_authors, count_categories = row
+    count_notes, count_von, count_komponisten, count_werke = row
 
 cur.execute("SELECT tags FROM notizen WHERE tags IS NOT NULL")
 all_tags = set()
@@ -50,18 +51,16 @@ cur.close()
 st.markdown('<div class="big-hello">👋 Willkommen, Mama!</div>', unsafe_allow_html=True)
 st.markdown(
     '<div class="subtitle">'
-    'Hier ist dein persönliches Tagebuch für alles rund um Musik, Kunst und Kultur – egal ob Klassik, Jazz, Lesungen, '
-    'Ausstellungen, Bücher, Radiosendungen oder was dir sonst noch wichtig ist!<br>'
-    'Halte besondere Erlebnisse, Werke, Namen, Ideen und auch spontane Inspirationen jederzeit fest. '
-    '<b>Deine Notizen sind für die ganze Welt der Kunst gemacht!</b>'
+    'Hier ist dein persönliches Tagebuch für alles rund um Musik – egal ob Werke, Komponist:innen, Interpret:innen, besondere Momente oder Radiosendungen!<br>'
+    'Halte besondere Erlebnisse, Namen, Ideen und spontane Inspirationen jederzeit fest. '
+    '<b>Deine Notizen sind für die ganze Welt der Musik gemacht!</b>'
     '</div>',
     unsafe_allow_html=True
 )
 st.markdown("""
     <div class="note-hint">
-        <b>Neu:</b> Notiere jetzt alles zu <span style="color:#4761ab"><b>Radiosendungen</b></span> – mit Moderator, Sendedatum oder besonderen Eindrücken!
-        <br>
-        Aber auch alles andere aus der Welt der Kunst: Konzertmomente, Gemälde, Gedichte, Lesungen oder Ausstellungen – deiner Kreativität sind keine Grenzen gesetzt! 🎙️🎨🎶
+        <b>Neu:</b> Auch Radiosendungen oder besondere Werke kannst du jetzt festhalten – mit Sendedatum oder Moderator!<br>
+        Nutze das Feld "von" für dich oder andere.
     </div>
 """, unsafe_allow_html=True)
 
@@ -70,11 +69,12 @@ st.markdown("---")
 # ---------------------------------------------------------------------------
 # Kennzahlen
 # ---------------------------------------------------------------------------
-cols = st.columns(4, gap="medium")
+cols = st.columns(5, gap="medium")
 labels_values = [
     ("📚 Notizen", count_notes),
-    ("👤 Autoren", count_authors),
-    ("🎨 Kategorien", count_categories),
+    ("👤 Von", count_von),
+    ("🎼 Komponist:innen", count_komponisten),
+    ("🎵 Werke", count_werke),
     ("🏷️ Tags", count_tags),
 ]
 for c, (label, val) in zip(cols, labels_values):
@@ -97,6 +97,6 @@ st.markdown("---")
 # ---------------------------------------------------------------------------
 st.info(
     "💡 Tipp: In der Ansicht *Alle Notizen* kannst du per Klick auf ein Tag sofort filtern. "
-    "Und in jeder Notiz kannst du jetzt nicht nur Musik, sondern auch Kunstwerke, Künstler:innen, Radiosendungen, Moderatoren und all deine persönlichen Eindrücke festhalten! 🎶🎨"
+    "Und in jeder Notiz kannst du alles zu Musik, Werken, Künstler:innen oder Radiosendungen festhalten! 🎶"
 )
-st.markdown('<div class="footer-jmr">Musik & Kunst verbinden – <b>JmrStudios</b></div>', unsafe_allow_html=True)
+st.markdown('<div class="footer-jmr">Musik verbindet – <b>JmrStudios</b></div>', unsafe_allow_html=True)
