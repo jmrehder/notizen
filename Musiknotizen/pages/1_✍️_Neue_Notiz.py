@@ -1,80 +1,38 @@
 import streamlit as st
-import time
-from utils import add_note
-from cloudflare_upload import upload_to_r2
-from audio_recorder_streamlit import audio_recorder
 from datetime import date
-import uuid
+from utils import add_note
+from audio_recorder_streamlit import audio_recorder
+import time
 
-st.set_page_config(page_title="Neue Notiz hinzufügen", layout="wide")
-st.title("✍️ Neue Notiz zu Musik, Kunst & Kultur")
-
-KATEGORIEN = ["Musik", "Literatur", "Gemälde", "Ausstellung", "Bühnenstück", "Sonstige"]
-AUTOREN = ["Cornelia", "Jörg-Martin"]
-
-# Cloudflare-Config aus st.secrets
-cf = st.secrets["cloudflare"]
-CF_ACCOUNT_ID = cf["account_id"]
-CF_ACCESS_KEY = cf["access_key"]
-CF_SECRET_KEY = cf["secret_key"]
-CF_BUCKET     = cf["bucket"]
+st.set_page_config(page_title="Neue Musik-Notiz", layout="wide")
+st.title("✍️ Neue Notiz (Musik)")
 
 with st.form("new_note_form", clear_on_submit=True):
-    new_titel        = st.text_input("Titel *")
-    new_kategorie    = st.selectbox("Kategorie *", KATEGORIEN)
-    new_notiz        = st.text_area("Notiz *", height=160)
-    new_autor        = st.selectbox("Autor *", AUTOREN, index=0)
-    new_tags         = st.text_input("Tags (kommasepariert, optional)")
-    new_radiosendung = st.text_input("Radiosendung (optional)")
-    new_moderator    = st.text_input("Moderator (optional)")
-    new_datum        = st.date_input("Datum", date.today())
-
-    # Bild-Upload (optional)
-    bild_file = st.file_uploader("Bild hochladen (optional)", type=["png", "jpg", "jpeg", "gif"])
-    bild_url = None
-    if bild_file:
-        unique_name = f"bilder/{uuid.uuid4()}_{bild_file.name}"
-        bild_url = upload_to_r2(
-            bild_file.read(), unique_name, bild_file.type,
-            CF_ACCOUNT_ID, CF_ACCESS_KEY, CF_SECRET_KEY, CF_BUCKET
-        )
-        st.success("Bild erfolgreich hochgeladen!")
-        st.image(bild_url, width=300)
-
-    # Audio aufnehmen und hochladen (optional)
-    st.subheader("Audio aufnehmen oder hochladen (optional)")
+    titel        = st.text_input("Titel *")
+    werk         = st.text_input("Werk")
+    komponist    = st.text_input("Komponist")
+    epoche       = st.text_input("Epoche")
+    verzeichnis  = st.text_input("Verzeichnis")
+    interpret    = st.text_input("Interpret")
+    notiz        = st.text_area("Notiz *", height=150)
+    von          = st.text_input("Von", value="Cornelia")
+    tags         = st.text_input("Tags (optional)")
+    radiosendung = st.text_input("Radiosendung (optional)")
+    moderator    = st.text_input("Moderator (optional)")
+    datum        = st.date_input("Datum", date.today())
+    st.markdown("---")
+    st.subheader("Audio aufnehmen (optional)")
     audio_bytes = audio_recorder()
-    audio_url = None
-    if audio_bytes:
-        unique_name = f"audio/{uuid.uuid4()}.wav"
-        audio_url = upload_to_r2(
-            audio_bytes, unique_name, "audio/wav",
-            CF_ACCOUNT_ID, CF_ACCESS_KEY, CF_SECRET_KEY, CF_BUCKET
-        )
-        st.success("Audio erfolgreich hochgeladen!")
-        st.audio(audio_url, format="audio/wav")
 
-    # Alternativ: Upload eines bestehenden Audio-Files
-    audio_file = st.file_uploader("Oder lade eine Audiodatei hoch (optional)", type=["wav", "mp3", "ogg"])
-    if audio_file:
-        unique_name = f"audio/{uuid.uuid4()}_{audio_file.name}"
-        audio_url = upload_to_r2(
-            audio_file.read(), unique_name, audio_file.type,
-            CF_ACCOUNT_ID, CF_ACCESS_KEY, CF_SECRET_KEY, CF_BUCKET
-        )
-        st.success("Audiofile erfolgreich hochgeladen!")
-        st.audio(audio_url)
-
-    # Formular abschicken
     submitted = st.form_submit_button("Notiz speichern")
     if submitted:
-        if new_titel and new_notiz and new_kategorie:
+        if titel and notiz:
             add_note(
-                new_titel, new_kategorie, new_notiz, new_autor, new_tags, new_radiosendung,
-                new_moderator, new_datum, bild_url, audio_url
+                titel, werk, komponist, epoche, verzeichnis, interpret, notiz, von,
+                tags, radiosendung, moderator, datum, audio_bytes
             )
-            st.success("Notiz erfolgreich gespeichert!")
+            st.success("Notiz gespeichert!")
             time.sleep(1)
             st.rerun()
         else:
-            st.warning("Titel, Kategorie und Notiz sind Pflichtfelder.")
+            st.warning("Titel und Notiz sind Pflichtfelder.")
