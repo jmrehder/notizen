@@ -16,7 +16,7 @@ else:
         "sslmode": "disable",
     }
 
-@st.cache_resource(show_spinner=False)
+# Keine Caching-Dekoration mehr!
 def get_db_connection():
     return psycopg2.connect(**DB_CONFIG)
 
@@ -31,6 +31,7 @@ def _exec(query: str, params: tuple | list):
         st.error(f"Datenbank‑Fehler: {e}")
     finally:
         cur.close()
+        conn.close()  # Verbindung immer schließen!
 
 def add_note(
     titel, werk, komponist, epoche, verzeichnis, interpret, notiz, von,
@@ -50,13 +51,13 @@ def get_notes():
         "SELECT id, titel, werk, komponist, epoche, verzeichnis, interpret, notiz, von, tags, radiosendung, moderator, datum, audio_bytes FROM notizen ORDER BY datum DESC, id DESC"
     )
     rows = cur.fetchall()
-    # Bytes richtig umwandeln
     result = []
     for r in rows:
         lst = list(r)
         lst[13] = bytes(lst[13]) if lst[13] is not None else None
         result.append(tuple(lst))
     cur.close()
+    conn.close()
     return result
 
 def delete_note(note_id: int):
