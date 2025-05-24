@@ -7,7 +7,7 @@ st.set_page_config(
     initial_sidebar_state="expanded",
 )
 
-# ----------------------- Mini-CSS für mehr Charme --------------------------
+# Mini-CSS
 st.markdown("""
     <style>
     body { background: #22243a !important; }
@@ -29,7 +29,7 @@ st.markdown("""
 conn = get_db_connection()
 cur  = conn.cursor()
 cur.execute("SELECT COUNT(*), COUNT(DISTINCT autor), COUNT(DISTINCT kategorie) FROM notizen")
-count_notes, count_autoren, count_kategorien = cur.fetchone()
+count_notes, count_authors, count_categories = cur.fetchone()
 cur.execute("SELECT tags FROM notizen WHERE tags IS NOT NULL")
 all_tags = set()
 for (tag_str,) in cur.fetchall():
@@ -43,8 +43,8 @@ cur.close()
 st.markdown('<div class="big-hello">👋 Willkommen, Mama!</div>', unsafe_allow_html=True)
 st.markdown(
     '<div class="subtitle">'
-    'Hier ist dein persönliches Tagebuch für alles rund um Musik, Kunst und Kultur – egal ob Klassik, Jazz, Rock, moderne Musik, Lesungen, '
-    'Künstler:innen, Ausstellungen, Bücher, Gemälde, Theater oder deine liebsten Radiosendungen!<br>'
+    'Hier ist dein persönliches Tagebuch für alles rund um Musik, Kunst und Kultur – egal ob Klassik, Jazz, Lesungen, '
+    'Ausstellungen, Bücher, Radiosendungen oder was dir sonst noch wichtig ist!<br>'
     'Halte besondere Erlebnisse, Werke, Namen, Ideen und auch spontane Inspirationen jederzeit fest. '
     '<b>Deine Notizen sind für die ganze Welt der Kunst gemacht!</b>'
     '</div>',
@@ -61,13 +61,13 @@ st.markdown("""
 st.markdown("---")
 
 # ---------------------------------------------------------------------------
-# Kennzahlen (angepasst)
+# Kennzahlen
 # ---------------------------------------------------------------------------
 cols = st.columns(4, gap="medium")
 labels_values = [
     ("📚 Notizen", count_notes),
-    ("🧑‍🎨 Autoren", count_autoren),
-    ("🗂️ Kategorien", count_kategorien),
+    ("👤 Autoren", count_authors),
+    ("🎨 Kategorien", count_categories),
     ("🏷️ Tags", count_tags),
 ]
 for c, (label, val) in zip(cols, labels_values):
