@@ -29,13 +29,20 @@ st.markdown("""
 conn = get_db_connection()
 cur  = conn.cursor()
 cur.execute("SELECT COUNT(*), COUNT(DISTINCT autor), COUNT(DISTINCT kategorie) FROM notizen")
-count_notes, count_authors, count_categories = cur.fetchone()
+row = cur.fetchone()
+if row is None or row[0] is None:
+    count_notes = count_authors = count_categories = 0
+else:
+    count_notes, count_authors, count_categories = row
+
 cur.execute("SELECT tags FROM notizen WHERE tags IS NOT NULL")
 all_tags = set()
 for (tag_str,) in cur.fetchall():
-    all_tags.update(t.strip().capitalize() for t in tag_str.split(',') if t.strip())
+    if tag_str:
+        all_tags.update(t.strip().capitalize() for t in tag_str.split(',') if t.strip())
 count_tags = len(all_tags)
 cur.close()
+
 
 # ---------------------------------------------------------------------------
 # Hero-Banner (zentriert, ohne Bild, mit JmrStudios)
