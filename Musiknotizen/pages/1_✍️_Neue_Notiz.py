@@ -9,8 +9,6 @@ from audio_recorder_streamlit import audio_recorder
 # ---------------------------------------------------------------------------
 st.set_page_config(page_title="Neue Notiz hinzufügen", layout="wide")
 
-if not check_password():
-    st.stop()
 
 st.title("✍️ Neue Notiz hinzufügen")
 st.markdown("Fülle die Felder aus, um eine neue Notiz inklusive optionaler Sprachnotiz anzulegen.")
