@@ -77,7 +77,7 @@ start = (st.session_state[page_key] - 1) * NOTES_PER_PAGE
 for note in notes[start : start + NOTES_PER_PAGE]:
     (
         note_id, titel, kategorie, notiz, autor, tags,
-        radiosendung, moderator, zusatzinfo, datum, bild_url, audio_url
+        radiosendung, moderator, datum, bild_url, audio_url
     ) = note
 
     edit_flag = f"edit_{note_id}"
@@ -95,7 +95,6 @@ for note in notes[start : start + NOTES_PER_PAGE]:
                 tag_in= st.text_input("Tags", tags or "")
                 r_in  = st.text_input("Radiosendung", radiosendung or "")
                 m_in  = st.text_input("Moderator", moderator or "")
-                z_in  = st.text_area("Zusatzinfo", zusatzinfo or "")
                 d_in  = st.date_input("Datum", value=datum)
                 b_in  = st.text_input("Bild-URL", bild_url or "")
                 au_in = st.text_input("Audio-URL", audio_url or "")
@@ -106,7 +105,7 @@ for note in notes[start : start + NOTES_PER_PAGE]:
                         if t_in and n_in:
                             update_note(
                                 note_id, t_in, k_in, n_in, a_in, tag_in, r_in,
-                                m_in, z_in, d_in, b_in, au_in
+                                m_in, d_in, b_in, au_in
                             )
                             st.session_state[edit_flag] = False
                             st.success("Gespeichert.")
@@ -126,8 +125,6 @@ for note in notes[start : start + NOTES_PER_PAGE]:
             if moderator:
                 st.markdown(f"**Moderator:** {moderator}")
             st.write(notiz)
-            if zusatzinfo:
-                st.info(zusatzinfo)
             if bild_url:
                 st.image(bild_url, caption="Bild zur Notiz", width=350)
             if audio_url:
