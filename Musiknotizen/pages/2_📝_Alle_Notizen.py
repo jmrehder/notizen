@@ -1,11 +1,23 @@
 import streamlit as st
-from utils import get_notes, delete_note
+from utils import get_notes, delete_note, update_note
 import datetime
 
-st.set_page_config(page_title="Alle Notizen", layout="wide")
+st.set_page_config(page_title="Alle Notizen (Musik)", layout="wide")
 st.title("📝 Alle Notizen (Musik)")
 
-notes = get_notes()
+# --- Suchfeld ---
+search_query = st.text_input("Suchen (Titel, Werk, Komponist, Notiz, etc.)", "")
+
+# --- Notizen laden (mit Filter) ---
+all_notes = get_notes()
+if search_query:
+    notes = [
+        n for n in all_notes
+        if search_query.lower() in " ".join([str(x or "") for x in n[1:8]+n[8:13]]).lower()
+    ]
+else:
+    notes = all_notes
+
 if not notes:
     st.info("Keine Notizen gefunden.")
     st.stop()
@@ -41,27 +53,67 @@ for note in notes[start : start + NOTES_PER_PAGE]:
         notiz, von, tags, radiosendung, moderator, datum, audio_bytes
     ) = note
 
+    edit_flag = f"edit_{note_id}"
+    st.session_state.setdefault(edit_flag, False)
+
     with st.expander(f"{titel} ({werk or ''}, {komponist or ''})"):
-        st.markdown(f"**Werk:** {werk or '-'}")
-        st.markdown(f"**Komponist:** {komponist or '-'}")
-        st.markdown(f"**Epoche:** {epoche or '-'}")
-        st.markdown(f"**Verzeichnis:** {verzeichnis or '-'}")
-        st.markdown(f"**Interpret:** {interpret or '-'}")
-        st.markdown(f"**Von:** {von}")
-        st.markdown(f"**Datum:** {datum.strftime('%d.%m.%Y') if isinstance(datum, (datetime.date, datetime.datetime)) else datum}")
-        st.markdown(f"**Tags:** {tags or '-'}")
-        st.markdown(f"**Radiosendung:** {radiosendung or '-'}")
-        st.markdown(f"**Moderator:** {moderator or '-'}")
-        st.markdown("---")
-        st.write(notiz)
-        if audio_bytes:
-            st.markdown("**Audio:**")
-            st.audio(audio_bytes, format="audio/wav")
-        col_e, col_d = st.columns(2)
-        with col_d:
-            if st.button("🗑️ Löschen", key=f"delbtn_{note_id}"):
-                delete_note(note_id)
-                st.success("Notiz gelöscht.")
-                st.rerun()
+        if st.session_state[edit_flag]:
+            st.subheader("Bearbeiten")
+            with st.form(f"form_{note_id}"):
+                t_in  = st.text_input("Titel *", titel)
+                w_in  = st.text_input("Werk", werk or "")
+                k_in  = st.text_input("Komponist", komponist or "")
+                e_in  = st.text_input("Epoche", epoche or "")
+                v_in  = st.text_input("Verzeichnis", verzeichnis or "")
+                ip_in = st.text_input("Interpret", interpret or "")
+                n_in  = st.text_area("Notiz *", notiz)
+                von_in= st.text_input("Von", von or "Cornelia")
+                tg_in = st.text_input("Tags", tags or "")
+                r_in  = st.text_input("Radiosendung", radiosendung or "")
+                m_in  = st.text_input("Moderator", moderator or "")
+                d_in  = st.date_input("Datum", value=datum if datum else datetime.date.today())
+                col_s, col_c = st.columns(2)
+                with col_s:
+                    if st.form_submit_button("Speichern"):
+                        if t_in and n_in:
+                            update_note(
+                                note_id, t_in, w_in, k_in, e_in, v_in, ip_in,
+                                n_in, von_in, tg_in, r_in, m_in, d_in, audio_bytes
+                            )
+                            st.session_state[edit_flag] = False
+                            st.success("Gespeichert.")
+                            st.rerun()
+                        else:
+                            st.warning("Titel und Notiz sind Pflichtfelder.")
+                with col_c:
+                    if st.form_submit_button("Abbrechen"):
+                        st.session_state[edit_flag] = False
+                        st.rerun()
+        else:
+            st.markdown(f"**Werk:** {werk or '-'}")
+            st.markdown(f"**Komponist:** {komponist or '-'}")
+            st.markdown(f"**Epoche:** {epoche or '-'}")
+            st.markdown(f"**Verzeichnis:** {verzeichnis or '-'}")
+            st.markdown(f"**Interpret:** {interpret or '-'}")
+            st.markdown(f"**Von:** {von}")
+            st.markdown(f"**Datum:** {datum.strftime('%d.%m.%Y') if isinstance(datum, (datetime.date, datetime.datetime)) else datum}")
+            st.markdown(f"**Tags:** {tags or '-'}")
+            st.markdown(f"**Radiosendung:** {radiosendung or '-'}")
+            st.markdown(f"**Moderator:** {moderator or '-'}")
+            st.markdown("---")
+            st.write(notiz)
+            if audio_bytes:
+                st.markdown("**Audio:**")
+                st.audio(audio_bytes, format="audio/wav")
+            col_e, col_d = st.columns(2)
+            with col_e:
+                if st.button("✏️ Bearbeiten", key=f"editbtn_{note_id}"):
+                    st.session_state[edit_flag] = True
+                    st.rerun()
+            with col_d:
+                if st.button("🗑️ Löschen", key=f"delbtn_{note_id}"):
+                    delete_note(note_id)
+                    st.success("Notiz gelöscht.")
+                    st.rerun()
 
 _paginator("bottom")
