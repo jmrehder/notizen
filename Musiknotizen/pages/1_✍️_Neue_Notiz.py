@@ -1,6 +1,6 @@
 import streamlit as st
 import time
-
+from utils import add_note
 from cloudflare_upload import upload_to_r2
 from audio_recorder_streamlit import audio_recorder
 from datetime import date
