@@ -17,8 +17,6 @@ from audio_recorder_streamlit import audio_recorder
 # ---------------------------------------------------------------------------
 st.set_page_config(page_title="Alle Notizen", layout="wide")
 
-if not check_password():
-    st.stop()
 
 st.title("📝 Alle Notizen")
 st.markdown("Hier findest du alle deine Notizen – inkl. eingebetteter Audio-Memos aus der Datenbank.")
