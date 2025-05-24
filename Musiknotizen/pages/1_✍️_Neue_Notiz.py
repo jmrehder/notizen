@@ -27,7 +27,6 @@ with st.form("new_note_form", clear_on_submit=True):
     new_tags         = st.text_input("Tags (kommasepariert, optional)")
     new_radiosendung = st.text_input("Radiosendung (optional)")
     new_moderator    = st.text_input("Moderator (optional)")
-    new_zusatzinfo   = st.text_area("Zusatzinfo (optional)", height=70)  # Höhe >= 68!
     new_datum        = st.date_input("Datum", date.today())
 
     # ---- Bild-Upload
@@ -72,7 +71,7 @@ with st.form("new_note_form", clear_on_submit=True):
         if new_titel and new_notiz and new_kategorie:
             add_note(
                 new_titel, new_kategorie, new_notiz, new_autor, new_tags, new_radiosendung,
-                new_moderator, new_zusatzinfo, new_datum, bild_url, audio_url
+                new_moderator, new_datum, bild_url, audio_url
             )
             st.success("Notiz erfolgreich gespeichert!")
             time.sleep(1)
