@@ -3,7 +3,6 @@ import time
 import uuid
 
 from utils import (
-    check_password,
     get_notes,
     delete_note,
     get_youtube_id,
