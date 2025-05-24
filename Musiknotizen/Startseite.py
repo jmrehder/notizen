@@ -7,7 +7,7 @@ st.set_page_config(
     initial_sidebar_state="expanded",
 )
 
-# ----------------------- Mini-CSS für mehr Charme --------------------------
+# Mini-CSS für ein freundlicheres Design
 st.markdown("""
     <style>
     body { background: #22243a !important; }
@@ -24,50 +24,57 @@ st.markdown("""
 """, unsafe_allow_html=True)
 
 # ---------------------------------------------------------------------------
-# Daten abrufen (Kennzahlen)
+# Kennzahlen dynamisch auf neue Tabelle
 # ---------------------------------------------------------------------------
 conn = get_db_connection()
-cur  = conn.cursor()
-cur.execute("SELECT COUNT(*), COUNT(DISTINCT komponist), COUNT(DISTINCT werk) FROM notizen")
-count_notes, count_composers, count_works = cur.fetchone()
+cur = conn.cursor()
+cur.execute("SELECT COUNT(*) FROM notizen")
+count_notes = cur.fetchone()[0]
+
+cur.execute("SELECT COUNT(DISTINCT autor) FROM notizen")
+count_autoren = cur.fetchone()[0]
+
+cur.execute("SELECT COUNT(DISTINCT kategorie) FROM notizen")
+count_kategorien = cur.fetchone()[0]
+
 cur.execute("SELECT tags FROM notizen WHERE tags IS NOT NULL")
 all_tags = set()
 for (tag_str,) in cur.fetchall():
-    all_tags.update(t.strip().capitalize() for t in tag_str.split(',') if t.strip())
+    all_tags.update(t.strip().capitalize() for t in (tag_str or "").split(',') if t.strip())
 count_tags = len(all_tags)
 cur.close()
 
 # ---------------------------------------------------------------------------
-# Hero-Banner (zentriert, ohne Bild, mit JmrStudios)
+# Hero-Banner & Beschreibung
 # ---------------------------------------------------------------------------
 st.markdown('<div class="big-hello">👋 Willkommen, Mama!</div>', unsafe_allow_html=True)
 st.markdown(
     '<div class="subtitle">'
-    'Hier ist dein persönliches Tagebuch für alles rund um Musik und Kunst – egal ob Klassik, Jazz, Rock, moderne Musik, Lesungen, '
-    'Künstler:innen, Ausstellungen oder deine liebsten Radiosendungen!<br>'
-    'Halte besondere Erlebnisse, Werke, Namen, Ideen und auch spontane Inspirationen jederzeit fest. '
+    'Hier ist dein persönliches Tagebuch für alles rund um Musik, Kunst & Kultur – egal ob Klassik, Jazz, Rock, Literatur, Ausstellungen, '
+    'Künstler:innen, Radiosendungen oder spannende Bühnenstücke!<br>'
+    'Halte besondere Erlebnisse, Werke, Ideen, Lesungen, Lieblingssendungen, Eindrücke und Inspirationen jederzeit fest. '
     '<b>Deine Notizen sind für die ganze Welt der Kunst gemacht!</b>'
     '</div>',
     unsafe_allow_html=True
 )
 st.markdown("""
     <div class="note-hint">
-        <b>Neu:</b> Notiere jetzt alles zu <span style="color:#4761ab"><b>Radiosendungen</b></span> – mit Moderator, Sendedatum oder besonderen Eindrücken!
+        <b>Neu:</b> Jetzt auch Einträge zu <span style="color:#4761ab"><b>Radiosendungen</b></span> und ihren Moderator:innen möglich!
         <br>
-        Aber auch alles andere aus der Welt der Kunst: Konzertmomente, Gemälde, Gedichte, Lesungen oder Ausstellungen – deiner Kreativität sind keine Grenzen gesetzt! 🎙️🎨🎶
+        Auch alles andere aus der Welt der Kunst: Konzertmomente, Bücher, Gemälde, Ausstellungen, Theaterstücke, Lesungen – alles an einem Ort. 🎙️🎨🎶
     </div>
 """, unsafe_allow_html=True)
 
 st.markdown("---")
 
 # ---------------------------------------------------------------------------
-# Kennzahlen
+# Kennzahlen-Übersicht
 # ---------------------------------------------------------------------------
 cols = st.columns(4, gap="medium")
 labels_values = [
     ("📚 Notizen", count_notes),
-    ("🎼 Komponist:innen", count_composers),
-    ("🎵 Werke", count_works),
+    ("👩‍🎨 Autoren", count_autoren),
+    ("🎭 Kategorien", count_kategorien),
     ("🏷️ Tags", count_tags),
 ]
 for c, (label, val) in zip(cols, labels_values):
@@ -90,6 +97,6 @@ st.markdown("---")
 # ---------------------------------------------------------------------------
 st.info(
     "💡 Tipp: In der Ansicht *Alle Notizen* kannst du per Klick auf ein Tag sofort filtern. "
-    "Und in jeder Notiz kannst du jetzt nicht nur Musik, sondern auch Kunstwerke, Künstler:innen, Radiosendungen, Moderatoren und all deine persönlichen Eindrücke festhalten! 🎶🎨"
+    "Halte Musik, Kunst, Radiosendungen, Ausstellungen, Autoren und all deine persönlichen Erlebnisse fest! 🎶🎨"
 )
 st.markdown('<div class="footer-jmr">Musik & Kunst verbinden – <b>JmrStudios</b></div>', unsafe_allow_html=True)
