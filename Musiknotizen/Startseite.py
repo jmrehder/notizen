@@ -17,9 +17,6 @@ st.set_page_config(
 # ---------------------------------------------------------------------------
 # Auth-Check
 # ---------------------------------------------------------------------------
-if not check_password():
-    st.info("Bitte melde dich an, um die Notizen anzuzeigen und zu verwalten.")
-    st.stop()
 
 # ---------------------------------------------------------------------------
 # Daten abrufen (Kennzahlen)
