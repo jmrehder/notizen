@@ -16,7 +16,6 @@ else:
         "sslmode": "disable",
     }
 
-# Keine Caching-Dekoration mehr!
 def get_db_connection():
     return psycopg2.connect(**DB_CONFIG)
 
@@ -42,6 +41,18 @@ def add_note(
         (titel, werk, komponist, epoche, verzeichnis, interpret, notiz, von, tags, radiosendung, moderator, datum, audio_bytes)
         VALUES (%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s)""",
         (titel, werk, komponist, epoche, verzeichnis, interpret, notiz, von, tags, radiosendung, moderator, datum, psycopg2.Binary(audio_bytes) if audio_bytes else None),
+    )
+
+def update_note(
+    note_id, titel, werk, komponist, epoche, verzeichnis, interpret,
+    notiz, von, tags, radiosendung, moderator, datum, audio_bytes
+):
+    _exec(
+        """UPDATE notizen SET
+            titel=%s, werk=%s, komponist=%s, epoche=%s, verzeichnis=%s, interpret=%s,
+            notiz=%s, von=%s, tags=%s, radiosendung=%s, moderator=%s, datum=%s, audio_bytes=%s
+           WHERE id=%s""",
+        (titel, werk, komponist, epoche, verzeichnis, interpret, notiz, von, tags, radiosendung, moderator, datum, psycopg2.Binary(audio_bytes) if audio_bytes else None, note_id),
     )
 
 def get_notes():
