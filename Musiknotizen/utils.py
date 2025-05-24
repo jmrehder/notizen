@@ -53,19 +53,12 @@ def _exec(query: str, params: tuple | list):
 # -----------------------------------------------------------------------------
 # 5) CRUD‑Funktionen
 # -----------------------------------------------------------------------------
-def add_note(
-    titel: str,
-    kategorie: str,
-    notiz: str,
-    autor: str,
-    tags: str | None,
-    radiosendung: str | None,
-    moderator: str | None,
-    zusatzinfo: dict | None,
-    datum: str | None,
-    bild_url: str | None,
-    audio_url: str | None,
-):
+def add_note(titel, kategorie, notiz, autor, tags, radiosendung, moderator, datum, bild_url, audio_url):
+    _exec(
+        """INSERT INTO notizen (titel, kategorie, notiz, autor, tags, radiosendung, moderator, datum, bild_url, audio_url)
+           VALUES (%s,%s,%s,%s,%s,%s,%s,%s,%s,%s)""",
+        (titel, kategorie, notiz, autor, tags, radiosendung, moderator, datum, bild_url, audio_url),
+    ):
     _exec(
         """INSERT INTO notizen (titel, kategorie, notiz, autor, tags, radiosendung, moderator, zusatzinfo, datum, bild_url, audio_url)
            VALUES (%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s)""",
