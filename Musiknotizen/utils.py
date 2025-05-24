@@ -1,102 +1,139 @@
-"""utils.py – verbindet sich entweder mit Supabase (per st.secrets) oder lokalem Postgres.
-Audio‑Memos werden als BYTEA gespeichert.
-"""
 from __future__ import annotations
-
 import re
 import psycopg2
 from psycopg2 import sql
 import streamlit as st
 
-# ---------------------------------------------------------------------------
+# -----------------------------------------------------------------------------
 # 1) Konfiguration  – Cloud‑Secrets haben Vorrang
-# ---------------------------------------------------------------------------
-if "postgres" in st.secrets:          # Streamlit Cloud / .streamlit/secrets.toml
-    DB_CONFIG = dict(st.secrets["postgres"])  # type: ignore[arg-type]
-else:                                  # Fallback: lokale Dev‑Datenbank
+# -----------------------------------------------------------------------------
+if "postgres" in st.secrets:
+    DB_CONFIG = dict(st.secrets["postgres"])
+else:
     DB_CONFIG: dict[str, str] = {
         "host": "localhost",
         "database": "musiknotizen",
         "user": "postgres",
         "password": "Klavier-4",
         "port": 5433,
-        "sslmode": "disable",      # lokal kein SSL
+        "sslmode": "disable",
     }
 
-
-
-
-
-# ---------------------------------------------------------------------------
-# 3) YouTube‑Helper
-# ---------------------------------------------------------------------------
-_YT_RE = re.compile(r"(?:https?://)?(?:www\\.)?(?:m\\.)?(?:youtube\\.com|youtu\\.be|youtube-nocookie\\.com)/(?:watch\\?v=|embed/|v/|)?([\\w-]{11})")
+# -----------------------------------------------------------------------------
+# 2) YouTube‑Helper (optional, wenn gebraucht)
+# -----------------------------------------------------------------------------
+_YT_RE = re.compile(r"(?:https?://)?(?:www\.)?(?:m\.)?(?:youtube\.com|youtu\.be|youtube-nocookie\.com)/(?:watch\?v=|embed/|v/|)?([\w-]{11})")
 
 def get_youtube_id(url: str | None) -> str | None:
-    m = _YT_RE.search(url or ""); return m.group(1) if m else None
+    m = _YT_RE.search(url or "")
+    return m.group(1) if m else None
 
-# ---------------------------------------------------------------------------
-# 4) DB‑Verbindung
-# ---------------------------------------------------------------------------
+# -----------------------------------------------------------------------------
+# 3) DB‑Verbindung
+# -----------------------------------------------------------------------------
 @st.cache_resource(show_spinner=False)
 def get_db_connection():
-    return psycopg2.connect(**DB_CONFIG)  # sslmode kommt aus config
+    return psycopg2.connect(**DB_CONFIG)
 
-# ---------------------------------------------------------------------------
-# 5) interne Helper
-# ---------------------------------------------------------------------------
-
+# -----------------------------------------------------------------------------
+# 4) interne Helper
+# -----------------------------------------------------------------------------
 def _exec(query: str, params: tuple | list):
-    conn = get_db_connection(); cur = conn.cursor()
+    conn = get_db_connection()
+    cur = conn.cursor()
     try:
-        cur.execute(query, params); conn.commit()
+        cur.execute(query, params)
+        conn.commit()
     except psycopg2.Error as e:
-        conn.rollback(); st.error(f"Datenbank‑Fehler: {e}")
+        conn.rollback()
+        st.error(f"Datenbank‑Fehler: {e}")
     finally:
         cur.close()
 
-# ---------------------------------------------------------------------------
-# 6) CRUD‑Funktionen
-# ---------------------------------------------------------------------------
-
-def add_note(titel: str, komponist: str | None, werk: str | None, interpret: str | None,
-             notiz: str, youtube_link: str | None, tags: str | None, sprachnotiz_data: bytes | None = None):
+# -----------------------------------------------------------------------------
+# 5) CRUD‑Funktionen
+# -----------------------------------------------------------------------------
+def add_note(
+    titel: str,
+    kategorie: str,
+    notiz: str,
+    autor: str,
+    tags: str | None,
+    radiosendung: str | None,
+    moderator: str | None,
+    zusatzinfo: dict | None,
+    datum: str | None,
+    bild_url: str | None,
+    audio_url: str | None,
+):
     _exec(
-        """INSERT INTO notizen (titel, komponist, werk, interpret, notiz, youtube_link, tags, sprachnotiz_data)
-             VALUES (%s,%s,%s,%s,%s,%s,%s,%s)""",
-        (titel, komponist, werk, interpret, notiz, youtube_link, tags,
-         psycopg2.Binary(sprachnotiz_data) if sprachnotiz_data else None),
+        """INSERT INTO notizen (titel, kategorie, notiz, autor, tags, radiosendung, moderator, zusatzinfo, datum, bild_url, audio_url)
+           VALUES (%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s)""",
+        (titel, kategorie, notiz, autor, tags, radiosendung, moderator, zusatzinfo, datum, bild_url, audio_url),
     )
 
-def update_note(note_id: int, titel: str, komponist: str | None, werk: str | None, interpret: str | None,
-                notiz: str, youtube_link: str | None, tags: str | None, sprachnotiz_data: bytes | None = None):
+def update_note(
+    note_id: int,
+    titel: str,
+    kategorie: str,
+    notiz: str,
+    autor: str,
+    tags: str | None,
+    radiosendung: str | None,
+    moderator: str | None,
+    zusatzinfo: dict | None,
+    datum: str | None,
+    bild_url: str | None,
+    audio_url: str | None,
+):
     _exec(
-        """UPDATE notizen SET titel=%s, komponist=%s, werk=%s, interpret=%s, notiz=%s,
-               youtube_link=%s, tags=%s, sprachnotiz_data=%s WHERE id=%s""",
-        (titel, komponist, werk, interpret, notiz, youtube_link, tags,
-         psycopg2.Binary(sprachnotiz_data) if sprachnotiz_data else None, note_id),
+        """UPDATE notizen SET
+               titel=%s,
+               kategorie=%s,
+               notiz=%s,
+               autor=%s,
+               tags=%s,
+               radiosendung=%s,
+               moderator=%s,
+               zusatzinfo=%s,
+               datum=%s,
+               bild_url=%s,
+               audio_url=%s
+           WHERE id=%s""",
+        (titel, kategorie, notiz, autor, tags, radiosendung, moderator, zusatzinfo, datum, bild_url, audio_url, note_id),
     )
 
 def get_notes(search_query: str = "", selected_tag: str | None = None, sort_by: str = "datum_desc"):
-    conn = get_db_connection(); cur = conn.cursor()
-    base = sql.SQL("SELECT id,titel,komponist,werk,interpret,notiz,youtube_link,tags,datum,sprachnotiz_data FROM notizen")
+    conn = get_db_connection()
+    cur = conn.cursor()
+    base = sql.SQL(
+        "SELECT id, titel, kategorie, notiz, autor, tags, radiosendung, moderator, zusatzinfo, datum, bild_url, audio_url FROM notizen"
+    )
     where, params = [], []
     if search_query:
-        like = f"%{search_query}%"; where.append("("+" OR ".join([f"{col} ILIKE %s" for col in ["titel","komponist","werk","interpret","notiz","tags"]])+")"); params.extend([like]*6)
+        like = f"%{search_query}%"
+        where.append("(" + " OR ".join([f"{col} ILIKE %s" for col in ["titel","kategorie","notiz","autor","tags","radiosendung","moderator"]]) + ")")
+        params.extend([like] * 7)
     if selected_tag:
-        where.append("LOWER(tags) LIKE %s"); params.append(f"%{selected_tag.lower()}%")
+        where.append("LOWER(tags) LIKE %s")
+        params.append(f"%{selected_tag.lower()}%")
     if where:
         base += sql.SQL(" WHERE " + " AND ".join(where))
-    order_map = {"datum_desc":"datum DESC","datum_asc":"datum ASC","titel_asc":"titel ASC","titel_desc":"titel DESC","komponist_asc":"komponist ASC NULLS LAST","komponist_desc":"komponist DESC NULLS LAST","interpret_asc":"interpret ASC NULLS LAST","interpret_desc":"interpret DESC NULLS LAST"}
+    order_map = {
+        "datum_desc": "datum DESC",
+        "datum_asc": "datum ASC",
+        "titel_asc": "titel ASC",
+        "titel_desc": "titel DESC",
+        # ggf. mehr Sortierungen nach Bedarf
+    }
     base += sql.SQL(" ORDER BY " + order_map.get(sort_by, "datum DESC"))
     try:
         cur.execute(base, params)
-        rows = cur.fetchall(); fixed=[]
-        for r in rows:
-            lst=list(r); lst[9]=bytes(lst[9]) if lst[9] is not None else None; fixed.append(tuple(lst))
-        return fixed
+        rows = cur.fetchall()
+        return rows
     except psycopg2.Error as e:
-        st.error(f"Fehler beim Abrufen der Notizen: {e}"); return []
+        st.error(f"Fehler beim Abrufen der Notizen: {e}")
+        return []
     finally:
         cur.close()
 
