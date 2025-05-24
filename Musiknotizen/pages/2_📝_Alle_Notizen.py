@@ -6,59 +6,76 @@ import datetime
 st.set_page_config(page_title="Alle Notizen (Musik)", layout="wide")
 st.title("📝 Alle Notizen (Musik)")
 
-# ----------- Suchfeld und Filter ----------
+# ----------------------------- FILTER ------------------------------
 with st.expander("🔎 Erweiterte Suche & Filter", expanded=True):
-    col1, col2, col3 = st.columns([3,2,3])
+    col1, col2, col3 = st.columns([3, 2, 5])
+
+    # Suchfeld
     with col1:
         search_query = st.text_input(
-            "Suche in Titel, Werk, Komponist, Interpret, Notiz, Tags, Radiosendung, Moderator",
+            "Suchbegriff (alle Felder)",
             value=st.session_state.get("search_query", ""),
             key="search_query",
+            placeholder="z.B. Mozart, Oper, Lieblingsstück, ...",
         )
-    with col2:
-        tag_filter = st.text_input("Nach Tag filtern (optional)", value=st.session_state.get("tag_filter", ""), key="tag_filter")
-    with col3:
-        date_mode = st.radio("Filtern nach Datum", ["Kein Filter", "Bestimmtes Datum", "Zeitraum"], horizontal=True)
-        if date_mode == "Bestimmtes Datum":
-            date_exact = st.date_input("Datum auswählen", key="date_exact")
-        elif date_mode == "Zeitraum":
-            date_from = st.date_input("Von", key="date_from")
-            date_to   = st.date_input("Bis", key="date_to")
 
-# ----------- Daten holen & filtern ----------
-notes = get_notes()
+    # Tag-Filter
+    notes_all = get_notes()
+    tag_set = set()
+    for note in notes_all:
+        tags = note[9] or ""
+        tag_set.update([t.strip().capitalize() for t in tags.split(",") if t.strip()])
+    tags_sorted = sorted(tag_set)
+    with col2:
+        tag_choice = st.selectbox("Nach Tag filtern", ["Alle"] + tags_sorted, key="tag_select")
+        selected_tag = None if tag_choice == "Alle" else tag_choice
+
+    # Datumsfilter
+    with col3:
+        date_mode = st.radio("Datumsfilter", ["Kein Filter", "Bestimmtes Datum", "Zeitraum"], horizontal=True, key="date_mode")
+        date_exact, date_from, date_to = None, None, None
+        if date_mode == "Bestimmtes Datum":
+            date_exact = st.date_input("Datum wählen", value=datetime.date.today(), key="date_exact")
+        elif date_mode == "Zeitraum":
+            d_col1, d_col2 = st.columns(2)
+            with d_col1:
+                date_from = st.date_input("Von", value=datetime.date.today() - datetime.timedelta(days=30), key="date_from")
+            with d_col2:
+                date_to = st.date_input("Bis", value=datetime.date.today(), key="date_to")
+# ------------------------ FILTER-LOGIK -------------------------------
+def filter_notes(notes):
+    out = []
+    for note in notes:
+        (
+            note_id, titel, werk, komponist, epoche, verzeichnis, interpret,
+            notiz, von, tags, radiosendung, moderator, datum, audio_bytes
+        ) = note
+        # Textsuche
+        haystack = " ".join(str(x or "").lower() for x in [
+            titel, werk, komponist, epoche, verzeichnis, interpret, notiz, von, tags, radiosendung, moderator
+        ])
+        if search_query and search_query.lower() not in haystack:
+            continue
+        # Tag-Filter
+        if selected_tag and (selected_tag.lower() not in (tags or "").lower()):
+            continue
+        # Datumsfilter
+        if date_mode == "Bestimmtes Datum":
+            if not datum or datum != date_exact:
+                continue
+        elif date_mode == "Zeitraum":
+            if not datum or datum < date_from or datum > date_to:
+                continue
+        out.append(note)
+    return out
+
+notes = filter_notes(get_notes())
+
 if not notes:
-    st.info("Keine Notizen gefunden.")
+    st.info("Keine Notizen gefunden. Passe ggf. die Filter/Suche an.")
     st.stop()
 
-def matches(note):
-    (
-        _id, titel, werk, komponist, epoche, verzeichnis, interpret,
-        notiz, von, tags, radiosendung, moderator, datum, audio_bytes
-    ) = note
-    query = search_query.lower()
-    tagf = tag_filter.lower()
-    # Suchen in allen relevanten Feldern
-    haystack = " ".join(str(x or "").lower() for x in [
-        titel, werk, komponist, epoche, verzeichnis, interpret, notiz, von, tags, radiosendung, moderator
-    ])
-    # Suche
-    if query and query not in haystack:
-        return False
-    if tagf and (tagf not in (tags or "").lower()):
-        return False
-    # Datumsfilter
-    if date_mode == "Bestimmtes Datum":
-        if not datum or datum != date_exact:
-            return False
-    elif date_mode == "Zeitraum":
-        if not datum or not (date_from <= datum <= date_to):
-            return False
-    return True
-
-notes = list(filter(matches, notes))
-
-# ----------- Pagination ----------
+# ------------------------ PAGINATION -------------------------------
 NOTES_PER_PAGE = 5
 page_key = "current_page_all"
 st.session_state.setdefault(page_key, 1)
@@ -83,7 +100,7 @@ def _paginator(pos: str):
 
 _paginator("top")
 
-# ----------- Anzeige und Bearbeiten ----------
+# ------------------- ANZEIGE & BEARBEITEN ---------------------------
 start = (st.session_state[page_key] - 1) * NOTES_PER_PAGE
 for note in notes[start : start + NOTES_PER_PAGE]:
     (
@@ -110,7 +127,6 @@ for note in notes[start : start + NOTES_PER_PAGE]:
                 r_in  = st.text_input("Radiosendung", radiosendung or "")
                 m_in  = st.text_input("Moderator", moderator or "")
                 d_in  = st.date_input("Datum", value=datum if datum else datetime.date.today())
-                
                 # Audio-Bereich
                 st.markdown("**Vorhandene Audio-Notiz:**")
                 remove_audio = False
@@ -141,7 +157,6 @@ for note in notes[start : start + NOTES_PER_PAGE]:
                                 final_audio = updated_audio
                             else:
                                 final_audio = audio_bytes
-
                             update_note(
                                 note_id, t_in, w_in, k_in, e_in, v_in, i_in,
                                 n_in, von_in, tag_in, r_in, m_in, d_in, final_audio
