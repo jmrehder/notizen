@@ -1,7 +1,7 @@
 import streamlit as st
 import time
 
-from utils import check_password, add_note
+from utils import add_note
 from audio_recorder_streamlit import audio_recorder
 
 # ---------------------------------------------------------------------------
