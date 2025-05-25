@@ -6,43 +6,36 @@ import datetime
 st.set_page_config(page_title="Alle Notizen (Musik)", layout="wide")
 st.title("📝 Alle Notizen (Musik)")
 
-# ----------------------------- FILTER ------------------------------
-with st.expander("🔎 Erweiterte Suche & Filter", expanded=True):
-    col1, col2, col3 = st.columns([3, 2, 5])
+notes = get_notes()
+if not notes:
+    st.info("Keine Notizen gefunden.")
+    st.stop()
 
-    # Suchfeld
+# --- Erweiterte Suche & Filter ---
+with st.expander("🔎 Erweiterte Suche & Filter", expanded=True):
+    col1, col2, col3, col4 = st.columns([3, 2, 2, 3])
     with col1:
         search_query = st.text_input(
-            "Suchbegriff (alle Felder)",
-            value=st.session_state.get("search_query", ""),
+            "Suche in Titel, Werk, Komponist, Interpret, Notiz, Tags, Radiosendung, Moderator",
             key="search_query",
-            placeholder="z.B. Mozart, Oper, Lieblingsstück, ...",
+            placeholder="z.B. Mozart, Oper, Lieblingsstück, ..."
         )
-
-    # Tag-Filter
-    notes_all = get_notes()
-    tag_set = set()
-    for note in notes_all:
-        tags = note[9] or ""
-        tag_set.update([t.strip().capitalize() for t in tags.split(",") if t.strip()])
-    tags_sorted = sorted(tag_set)
     with col2:
-        tag_choice = st.selectbox("Nach Tag filtern", ["Alle"] + tags_sorted, key="tag_select")
-        selected_tag = None if tag_choice == "Alle" else tag_choice
-
-    # Datumsfilter
+        tag_choice = st.text_input("Nach Tag filtern (optional)", value="", key="tag_filter")
     with col3:
-        date_mode = st.radio("Datumsfilter", ["Kein Filter", "Bestimmtes Datum", "Zeitraum"], horizontal=True, key="date_mode")
+        interpret_filter = st.text_input("Nach Interpret filtern (optional)", value="", key="interpret_filter")
+    with col4:
+        date_mode = st.radio("Datum filtern", ["Kein Filter", "Bestimmtes Datum", "Zeitraum"], horizontal=True, key="date_mode")
         date_exact, date_from, date_to = None, None, None
         if date_mode == "Bestimmtes Datum":
-            date_exact = st.date_input("Datum wählen", value=datetime.date.today(), key="date_exact")
+            date_exact = st.date_input("Datum auswählen", value=datetime.date.today(), key="date_exact")
         elif date_mode == "Zeitraum":
-            d_col1, d_col2 = st.columns(2)
-            with d_col1:
+            dcol1, dcol2 = st.columns(2)
+            with dcol1:
                 date_from = st.date_input("Von", value=datetime.date.today() - datetime.timedelta(days=30), key="date_from")
-            with d_col2:
+            with dcol2:
                 date_to = st.date_input("Bis", value=datetime.date.today(), key="date_to")
-# ------------------------ FILTER-LOGIK -------------------------------
+
 def filter_notes(notes):
     out = []
     for note in notes:
@@ -50,18 +43,21 @@ def filter_notes(notes):
             note_id, titel, werk, komponist, epoche, verzeichnis, interpret,
             notiz, von, tags, radiosendung, moderator, datum, audio_bytes
         ) = note
-        # Textsuche
-        haystack = " ".join(str(x or "").lower() for x in [
-            titel, werk, komponist, epoche, verzeichnis, interpret, notiz, von, tags, radiosendung, moderator
-        ])
+        haystack = " ".join([
+            str(x) for x in [titel, werk, komponist, epoche, verzeichnis, interpret, notiz, von, tags, radiosendung, moderator]
+        ]).lower()
+        # Suchtext
         if search_query and search_query.lower() not in haystack:
             continue
         # Tag-Filter
-        if selected_tag and (selected_tag.lower() not in (tags or "").lower()):
+        if tag_choice and tag_choice.lower() not in (tags or "").lower():
+            continue
+        # Interpret-Filter
+        if interpret_filter and interpret_filter.lower() not in (interpret or "").lower():
             continue
         # Datumsfilter
         if date_mode == "Bestimmtes Datum":
-            if not datum or datum != date_exact:
+            if not datum or str(datum) != str(date_exact):
                 continue
         elif date_mode == "Zeitraum":
             if not datum or datum < date_from or datum > date_to:
@@ -69,17 +65,13 @@ def filter_notes(notes):
         out.append(note)
     return out
 
-notes = filter_notes(get_notes())
+filtered_notes = filter_notes(notes)
 
-if not notes:
-    st.info("Keine Notizen gefunden. Passe ggf. die Filter/Suche an.")
-    st.stop()
-
-# ------------------------ PAGINATION -------------------------------
+# --- Pagination ---
 NOTES_PER_PAGE = 5
 page_key = "current_page_all"
 st.session_state.setdefault(page_key, 1)
-total_pages = (len(notes) - 1) // NOTES_PER_PAGE + 1
+total_pages = (len(filtered_notes) - 1) // NOTES_PER_PAGE + 1
 st.session_state[page_key] = max(1, min(st.session_state[page_key], total_pages))
 
 def _paginator(pos: str):
@@ -100,9 +92,8 @@ def _paginator(pos: str):
 
 _paginator("top")
 
-# ------------------- ANZEIGE & BEARBEITEN ---------------------------
 start = (st.session_state[page_key] - 1) * NOTES_PER_PAGE
-for note in notes[start : start + NOTES_PER_PAGE]:
+for note in filtered_notes[start : start + NOTES_PER_PAGE]:
     (
         note_id, titel, werk, komponist, epoche, verzeichnis, interpret,
         notiz, von, tags, radiosendung, moderator, datum, audio_bytes
@@ -127,14 +118,18 @@ for note in notes[start : start + NOTES_PER_PAGE]:
                 r_in  = st.text_input("Radiosendung", radiosendung or "")
                 m_in  = st.text_input("Moderator", moderator or "")
                 d_in  = st.date_input("Datum", value=datum if datum else datetime.date.today())
+                
                 # Audio-Bereich
                 st.markdown("**Vorhandene Audio-Notiz:**")
-                remove_audio = False
-                if audio_bytes:
-                    st.audio(audio_bytes, format="audio/wav")
-                    remove_audio = st.checkbox("Sprachnotiz löschen", key=f"remove_audio_{note_id}")
-                else:
-                    st.info("Kein Audio gespeichert.")
+                audio_col1, audio_col2 = st.columns([4, 2])
+                with audio_col1:
+                    if audio_bytes:
+                        st.audio(audio_bytes, format="audio/wav")
+                    else:
+                        st.info("Kein Audio gespeichert.")
+                with audio_col2:
+                    audio_remove = st.checkbox("Audio löschen", key=f"audio_remove_{note_id}")
+
                 st.markdown("**Neues Audio aufnehmen oder hochladen (optional, ersetzt vorhandene Aufnahme):**")
                 new_audio = audio_recorder()
                 audio_file = st.file_uploader("Oder lade eine Audiodatei hoch", type=["wav", "mp3", "ogg"])
@@ -150,11 +145,11 @@ for note in notes[start : start + NOTES_PER_PAGE]:
                 with col_s:
                     if st.form_submit_button("Speichern"):
                         if t_in and n_in:
-                            # Audio löschen geht vor Upload/Beibehalten!
-                            if remove_audio:
-                                final_audio = None
-                            elif updated_audio is not None:
+                            # Audio: Vorrang hat neues, dann ggf. löschen, sonst bisheriges
+                            if updated_audio is not None:
                                 final_audio = updated_audio
+                            elif audio_remove:
+                                final_audio = None
                             else:
                                 final_audio = audio_bytes
                             update_note(
